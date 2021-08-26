@@ -1,0 +1,7 @@
+package com.niluogege.libraryb
+
+interface LibraryBService {
+    fun getLibrayName(): String
+
+    fun getApiBean(): ApiBean
+}

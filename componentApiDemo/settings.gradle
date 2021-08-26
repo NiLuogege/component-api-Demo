@@ -1,2 +1,6 @@
+apply from: '/gradle/api/api-compile.gradle'
+
+includeWithApi ':libraryB'
+include ':libraryA'
 include ':app'
 rootProject.name = "componentApiDemo"

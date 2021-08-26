@@ -1,0 +1,6 @@
+package com.niluogege.libraryb
+
+data class ApiBean(
+    var name: String = "",
+    var age: String = ""
+)

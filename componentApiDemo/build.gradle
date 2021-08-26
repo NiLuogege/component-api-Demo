@@ -1,4 +1,35 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+
+ext.versions = [
+        compileSdkVersion    : 30,
+        buildToolsVersion    : '30.0.3',
+        minSdkVersion        : 16,///Android 5.0
+        targetSdkVersion     : 30, //Android 11
+
+        kotlin               : "1.3.71",
+        core_ktx             : "1.3.1",
+        app_compat           : "1.2.0",
+        junit                : "4.12",
+        ext_junit            : "1.1.2",
+        espresso_core        : "3.3.0",
+        arch                 : '2.1.0',
+]
+ext.deps = [
+        core_ktx             : "androidx.core:core-ktx:$versions.core_ktx",
+        app_compat           : "androidx.appcompat:appcompat:$versions.app_compat",
+
+        test                 : [
+                junit        : "junit:junit:$versions.junit",
+                ext_junit    : "androidx.test.ext:junit:$versions.ext_junit",
+                espresso_core: "androidx.test.espresso:espresso-core:$versions.espresso_core",
+                arch_core    : "androidx.arch.core:core-testing:${versions.arch}",
+        ],
+        kotlin               : [
+                stdlib    : "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$versions.kotlin",
+        ],
+]
+
 buildscript {
     ext.kotlin_version = "1.3.72"
     repositories {

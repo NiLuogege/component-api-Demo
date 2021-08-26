@@ -1,0 +1,122 @@
+//生成和配置 api 项目
+
+def includeWithApi(String moduleName) {
+    //先正常加载这个模块
+    include(moduleName)
+    //找到这个模块的路径
+    String originModuleDir = project(moduleName).projectDir
+    //这个是新的路径
+    String apiModuleDir = "${originModuleDir}-api"
+
+    //原模块的名字
+    String originModuleName = project(moduleName).name
+    //新模块的名字
+    def apiModuleName = "${originModuleName}-api"
+
+//    println "originModuleDir=$originModuleDir"
+//    println "apiModuleDir=$apiModuleDir"
+
+
+    // 每次编译删除之前的文件
+    deleteDir(apiModuleDir)
+
+    //复制.api文件到新的路径
+    copy() {
+        from originModuleDir
+        into apiModuleDir
+        exclude '**/build/'
+        exclude '**/res/'
+        include '**/*.api'
+    }
+
+
+    //创建配置文件目录
+    makeServiceConfigFile(originModuleDir)
+
+    //生成 AndroidManifest.xml
+    makeAndroidManifest(originModuleName, apiModuleDir)
+
+    //复制 gradle文件到新的路径，作为该模块的gradle
+    WorkResult copyApiModuleGradleResult = copy() {
+        from "${rootProject.projectDir.absolutePath}/gradle/api/api-module.gradle"
+        into "${apiModuleDir}/"
+    }
+
+//    println "copyResult=${copyApiModuleGradleResult.didWork}"
+
+    //重命名一下gradle
+    def build = new File(apiModuleDir + "/api-module.gradle")
+    if (build.exists()) {
+        build.renameTo(new File(apiModuleDir + "/build.gradle"))
+    }
+
+    //删除空文件夹
+    deleteEmptyDir(new File(apiModuleDir))
+
+    // 重命名.api文件，生成正常的.java文件
+    renameApiFiles(apiModuleDir, '.api', '.kt')
+
+    //正常加载新的模块
+    include ":$apiModuleName"
+}
+
+private void deleteEmptyDir(File dir) {
+    if (dir.isDirectory()) {
+        File[] fs = dir.listFiles()
+        if (fs != null && fs.length > 0) {
+            for (int i = 0; i < fs.length; i++) {
+                File tmpFile = fs[i]
+                if (tmpFile.isDirectory()) {
+                    deleteEmptyDir(tmpFile)
+                }
+                if (tmpFile.isDirectory() && tmpFile.listFiles().length <= 0) {
+                    tmpFile.delete()
+                }
+            }
+        }
+        if (dir.isDirectory() && dir.listFiles().length == 0) {
+            dir.delete()
+        }
+    }
+}
+
+private void deleteDir(String targetDir) {
+    FileTree targetFiles = fileTree(targetDir)
+    targetFiles.exclude "*.iml"
+    targetFiles.each { File file ->
+        file.delete()
+    }
+}
+
+/**
+ * rename api files(java, kotlin...)
+ */
+private def renameApiFiles(root_dir, String suffix, String replace) {
+    FileTree files = fileTree(root_dir).include("**/*$suffix")
+    files.each {
+        File file ->
+            file.renameTo(new File(file.absolutePath.replace(suffix, replace)))
+    }
+}
+
+def makeServiceConfigFile(String originModuleDir){
+    String serviceConfigFilePath = "${originModuleDir}/src/main/resources/META-INF/services"
+    File serviceConfigFile = new File(serviceConfigFilePath)
+    if (!serviceConfigFile.exists()){
+        serviceConfigFile.mkdirs()
+    }
+}
+
+//生成AndroidManifest
+def makeAndroidManifest(String originoduleName, String apiModuleDir) {
+    String manifestPath = "${apiModuleDir}/src/main/AndroidManifest.xml"
+    File manifest = new File(manifestPath)
+    manifest.withWriter { writer ->
+        writer.writeLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>")
+        writer.writeLine("<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"")
+        writer.writeLine(" package=\"com.${originoduleName}.api\">")
+        writer.writeLine("</manifest>")
+    }
+}
+
+ext.includeWithApi = this.&includeWithApi
